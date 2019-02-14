@@ -1,0 +1,212 @@
+# Item
+The same dictionary data structure represents both players and non-player items. Many methods return a list of these, including: `fut.Core.tradepile()` and `fut.Core.club()`.
+- `assetId` - int. base id
+- `assists` - int. 0
+- `attributeList` - array
+- `bidState` - string
+    - `None` - not listed, or on transfer list but inactive
+    - `'none'` - listed or sold
+- `buyNowPrice` - int. example: `200`
+    - `None` - not listed
+    - `0` - on transfer list but inactive
+- `cardType` - int. alias to `cardsubtypeid`
+- `cardsubtypeid` - int
+- `contract` - int. remaining contract
+- `currentBid` - int
+    - `None` - not listed
+    - `0` - on transfer list but inactive, or listed but no bid
+    - `>0` - bid/sold price
+- `discardValue` - int. quick sell value
+- `expires` - int. remaining time (seconds) on transfer list
+    - `None` - not listed
+    - `0` - on transfer list but inactive
+    - `-1` - listing expired or sold
+- `fitness` - int
+- `formation` - string. ??? (example: `'f5212'`)
+- `id` - int. item id
+- `injuryGames` - int
+    - `None` - for non-player items
+    - `0` - if not injured
+- `injuryType` - string.
+    - `None` - for non-player items
+    - `'none'` - if not injured
+- `itemState` - string.
+    - `'free'` - not listed, listing expired
+    - `'forSale'` - listed
+    - `'invalid'` - sold
+- `itemType` - string (cardType | cardInfo->Item->ItemType)
+    - `'ball'` - `30` | `'Ball'`
+    - `'contract'`
+        - `201` | `'ContractPlayer'`
+        - `202` | `'ContractStaff'`
+    - `'custom'` - `11` | `'Badge'`
+    - `'fitnessCoach'` - `8` | `'FitnessCoach'`
+    - `'gkCoach'` - `6` | `'GkCoach'`
+    - `'headCoach'` - `5` | `'HeadCoach'`
+    - `'health'`
+        - [`211`,`217`] | `'HealthXxxxx'`
+        - `218` | `'HealthAll'`
+        - `219` | `'FitnessPlayer'`
+        - `220` | `'FitnessTeam'`
+    - `'kit'` - `9` | NONE
+    - `'manager'` - `4` | `'Manager'`
+    - `'misc'`
+        - `231` | `'MiscCoins'` (`{u'Rating': u'60', u'Amount': u'100', u'Rare': u'0', u'ItemType': u'MiscCoins', u'Desc': u'NumFreeCredits'}`)
+        - `237` - Player Pick Item `{u'Rating': u'99', u'Amount': u'3010', u'Desc': u'PlayerPickItemDesc13'}`
+    - `'player'` - [`0`, `3`]
+    - `'physio'` - `7` | `'Physio'`
+    - `'stadium'` - `10` | `'Stadium'`
+    - `'training'`
+        - [`51`, `56`] - `ItemType='TrainingGkXxxxx', Amount=5`
+        - `57` - `ItemType='TrainingGkAll', Amount=3`
+        - [`61`, `66`] - `ItemType='TrainingPlayerXxxxx', Amount=5`
+        - `67` - `ItemType='TrainingPlayerAll', Amount=3`
+- `lastSalePrice` - int. `>0` if item was bought on the transfer market
+- `leagueId` - int
+- `lifetimeAssists` - int
+- `lifetimeStats` - array
+- `loans` - ??? (seems to be `None` for everything)
+- `loyaltyBonus` - int. either `0` or `1`. player only. `None` for non-player
+- `marketDataMaxPrice` - int. example: `10000`
+- `marketDataMinPrice` - int. example: `150`
+- `morale` - int. ??? example: `50`. player only. `None` for non-player
+- `nation` - int
+- `offers` - int. ???
+    - `None` - not listed
+- `owners` - int. # of owners, e.g. `1` means first owner. player only. `None` for non-player
+- `pile` - int
+    - `0` - sold
+    - `5` - listed, listing expired, or on transfer list but inactive
+    - `7` - not listed
+- `playStyle` - int. chemistry style
+- `position` - string. example: `'CDM'`
+- `rareflag` - int
+	- `0` - NONE
+	- `1` - RARE
+	- `2` - LOCK
+	- `3` - TOTW
+	- `4` - PURPLE
+	- `5` - TOTY
+	- `6` - RB
+	- `7` - GREEN
+	- `8` - ORANGE
+	- `9` - PINK
+	- `10` - TEAL
+	- `11` - TOTS
+	- `12` - LEGEND
+	- `13` - WC
+	- `14` - UNICEF
+	- `15` - OLDIMOTM
+	- `16` - FUTTY
+	- `17` - STORYMODE
+	- `18` - CHAMPION
+	- `19` - CMOTM
+	- `20` - IMOTM
+	- `21` - OTW
+	- `22` - HALLOWEEN
+	- `23` - MOVEMBER
+	- `24` - SBC
+	- `25` - SBCP
+	- `26` - PROMOA
+	- `27` - PROMOB
+	- `28` - AWARD
+	- `30` - BDAY
+	- `31` - UNITED
+	- `32` - FUTMAS
+	- `33` - RTRC
+	- `34` - PTGS
+	- `35` - FOF
+	- `36` - MARQUEE
+	- `37` - CHAMPIONSHIP
+	- `38` - EUMOTM
+	- `39` - TOTT
+	- `40` - RRC
+	- `41` - RRR
+    - `47` - UEFA Champions League Common
+    - `48` - UEFA Champions League Rare
+    - `51` - Flashback Player SBC
+    - `63` - FUT SWAP DEAL
+    - `64` - Team of the Year Nominee
+    - `68` - UEFA Europa League Team of the Tournament
+    - `70` - Team Of The Group Stage
+    - `71` - Future Star
+- `rating` - example: `62`
+- `resourceGameYear` - example: `2019`
+- `resourceId` - int. player version id. same as `assetId` for the base version, but different for other versions such as TOTW. `fut.Core.searchDefinition()` returns all versions of a play given its `assetId`
+- `sellerEstablished` - int. ???. always `0`?
+- `sellerId` - int. ???. always `0`?
+- `sellerName` - ???. always `None`?
+- `startingBid` - example: `150`
+- `statsList` - array
+- `suspension` - example: `0`
+- `teamid` - `113057`
+- `timestamp` - `1546731760`. start time at the club???
+- `tradeId` - int. example: `237766128583`
+    - `None` - not listed
+    - `0` - on transfer list but inactive
+    - `>0` - listed or sold
+- `tradeState` - string
+    - `None` - not listed, or on transfer list but inactive
+    - `'active'` - listed
+    - `'closed'` - sold
+    - `'expired'` - listing expired
+- `training` - `0`
+- `untradeable` - bool
+- `watched` - bool
+    - `None` - not listed
+    - `True` - listed, sold, or listing expired
+    - `False` - on transfer list but inactive
+- `year` - alias to `resourceGameYear`
+
+# Using `fut.Core.club()` to search Club players
+### Quality:
+- Special: `rare=True` (query param `&rate=SP`)
+- Gold/Silver/Bronze: `level='gold/silver/bronze'` (`&level=gold/silver/bronze`)
+
+### Player Name
+`defId={assetId}` (`&defId={assetId}`)
+
+### Position
+Test more if needed. Seems to have partial support only and not match actual API calls completely
+- NONE: `ctype='player'` (`&type=player`)
+- Defenders: `&type=130`
+- Midfielders: `&type=131`
+- Attackers: `&type=132`
+- GK/RWB/.../ST/LW': `&type=player&position=GK/RWB/.../ST/LW`
+
+### Untradeables Only
+`&untradeable=true`. Not supported
+
+# Packs
+`fut.Core.packs()` returns all packs wrapped in a dict object. The `purchase` field contains the list of packs:
+
+```python
+session = fut.Core(...)
+packs = session.packs()['purchase']
+print([(x['id'], x['coins'], x['isPremium']) for x in pp])
+```
+
+Use the `id` field when buying a pack. The following buys a common Bronze pack (for 400 coins), and print out info for each card:
+```python
+pack = session.buyPack(100)
+un = session.unassigned()
+for x in sorted(un, key=lambda x: x['itemType']):
+    # XXX skip kits because cardInfo() throws exception for them
+    if x['itemType'] != 'kit':
+        print(session.cardInfo(x['resourceId']))
+```
+Regular Non-promotional pack IDs are:
+- `100` - Bronze
+- `101` - Premium Bronze
+- `200` - Silver
+- `201` - Premium Silver
+- `300` - Gold
+- `301` - Premium Gold
+
+# References
+- [FUT Lookups](https://github.com/TrevorMcCormick/futmarket)
+
+# Misc
+Install local fut package:
+
+```pip install file:///Users/yuesong/Work/projects/fut/dist/fut-0.4.2.tar.gz```
