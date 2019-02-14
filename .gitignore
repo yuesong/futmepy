@@ -1,0 +1,8 @@
+.vscode/
+__pycache__/
+virtualenv/
+venv/
+*.pyc
+cookies.txt
+token.txt
+*.code-workspace
