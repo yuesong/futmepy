@@ -3,7 +3,7 @@
 import logging
 import time
 
-import timeutil
+from . import timeutil
 
 logger = logging.getLogger(__name__)
 
@@ -180,7 +180,7 @@ def main():
         datefmt='%m-%d %H:%M:%S',
         level=logging.INFO)
     flipper = Flipper(None, None)
-    for _ in xrange(60):
+    for _ in range(60):
         flipper.do_work()
         time.sleep(1)
 

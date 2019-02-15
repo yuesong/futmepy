@@ -74,10 +74,10 @@ class Display(object):
     def format(self, items, prepend='', append=''):
         pw = col_widths(items)
         ew = {
-            'name':   max([len(unicode(self.name_str(x))) for x in items]),
-            'team':   max([len(unicode(self.team_str(x['teamid']))) for x in items]),
-            'league': max([len(unicode(self.league_str(x['leagueId']))) for x in items]),
-            'nation': max([len(unicode(self.nation_str(x['nation']))) for x in items]),
+            'name':   max([len(self.name_str(x)) for x in items]),
+            'team':   max([len(self.team_str(x['teamid'])) for x in items]),
+            'league': max([len(self.league_str(x['leagueId'])) for x in items]),
+            'nation': max([len(self.nation_str(x['nation'])) for x in items]),
             'rf':     4,
             'ut':     2,
             'pos':    3
@@ -107,4 +107,4 @@ def max_width(lst):
     return max([len(none_str(x)) for x in lst]) if lst else 0
 
 def none_str(v):
-    return '' if v is None else unicode(v)
+    return '' if v is None else str(v)

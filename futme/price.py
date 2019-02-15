@@ -2,11 +2,12 @@
 
 import logging
 import time
+
+import fut
 import requests
 from beaker.cache import cache_region, cache_regions, region_invalidate
 
-import fut
-import timeutil
+from . import timeutil
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +93,7 @@ def history(player):
     return PriceHistory(sorted(d.values(), key=lambda x: x.timestamp, reverse=True))
 
 def futbin_get_json(url):
-    for _ in xrange(3):
+    for _ in range(3):
         try:
             return requests.get(url).json()
         except:

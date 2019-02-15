@@ -3,7 +3,7 @@
 import logging
 import sys
 
-import datafile
+from . import datafile
 
 logger = logging.getLogger(__name__)
 
@@ -80,7 +80,7 @@ class Club(object):
             players.extend(page)
         return [p for p in players if p['rareflag'] in rareflags] if rareflags else players
 
-    def club_all_pages(self, max_page=sys.maxint, **kwargs):
+    def club_all_pages(self, max_page=sys.maxsize, **kwargs):
         players = []
         page_count = 0
         while True:

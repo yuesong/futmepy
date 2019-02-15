@@ -6,8 +6,8 @@ import time
 import fut
 from beaker.cache import cache_region, cache_regions, region_invalidate
 
-import core
-import price
+from . import core
+from . import price
 
 logger = logging.getLogger(__name__)
 

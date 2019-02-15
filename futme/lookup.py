@@ -10,7 +10,7 @@ import sys
 import fut
 import requests
 
-import datafile
+from . import datafile
 
 logger = logging.getLogger(__name__)
 
@@ -46,12 +46,9 @@ class Lookups(object):
 
     def _load_players(self):
         players = {}
-        for id, player in fut.core.players().iteritems():
-            # Make sure all player names are decoded from utf-8 to unicode 
-            for k, v in player.iteritems():
-                player[k] = codecs.decode(v, 'utf-8') if isinstance(v, str) else v
+        for id, player in fut.core.players().items():
             players[id] = player
-        datafile.save_json(players.values(), Lookups._LU_FILE_PLAYERS)
+        datafile.save_json(list(players.values()), Lookups._LU_FILE_PLAYERS)
         return players
 
     def _init_data(self, force_reload):

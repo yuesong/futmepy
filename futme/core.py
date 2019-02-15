@@ -8,13 +8,12 @@ import time
 import fut
 import requests
 
-import datafile
-
-from club import Club
-from display import Display
-from lookup import Lookups
-from process import Proc
-from transfer import TransferMarket
+from . import datafile
+from .club import Club
+from .display import Display
+from .lookup import Lookups
+from .process import Proc
+from .transfer import TransferMarket
 
 logger = logging.getLogger(__name__)
 
