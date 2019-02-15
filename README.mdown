@@ -52,6 +52,7 @@ The same dictionary data structure represents both players and non-player items.
     - `'manager'` - `4` | `'Manager'`
     - `'misc'`
         - `231` | `'MiscCoins'` (`{u'Rating': u'60', u'Amount': u'100', u'Rare': u'0', u'ItemType': u'MiscCoins', u'Desc': u'NumFreeCredits'}`)
+        - `233` - Bronze Pack
         - `237` - Player Pick Item `{u'Rating': u'99', u'Amount': u'3010', u'Desc': u'PlayerPickItemDesc13'}`
     - `'player'` - [`0`, `3`]
     - `'physio'` - `7` | `'Physio'`
