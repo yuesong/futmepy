@@ -3,9 +3,8 @@
 import logging
 import time
 
-import fut
 import requests
-from beaker.cache import cache_region, cache_regions, region_invalidate
+from beaker.cache import cache_region, cache_regions
 
 from . import timeutil
 
@@ -103,7 +102,7 @@ def futbin_get_json(url):
 class PriceHistory(object):
 
     def __init__(self, points):
-        self.points = points
+        self.points = sorted(points, key=lambda x: x.timestamp, reverse=True)
 
     def high(self):
         return max(self.points, key=lambda x: x.value)
@@ -133,15 +132,19 @@ class PriceHistory(object):
         now = time.time()
         return PriceHistory([p for p in self.points if p.time_within(now - t1, now - t2)])
 
+    def add(self, current_price):
+        pp = PricePoint(int(time.time()), current_price)
+        self.points.insert(0, pp)
+
 class PricePoint(object):
     def __init__(self, timestamp, value):
         self.timestamp = timestamp
         self.value = value
-    
+
     def __repr__(self):
         return 'PricePoint(timestamp={}, age={}, value={})'.format(
             self.timestamp, timeutil.dur_str(self.age()), self.value)
-    
+
     def __str__(self):
         return '{} ({})'.format(self.value, timeutil.dur_str(self.age()))
 
