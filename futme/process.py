@@ -51,7 +51,7 @@ class Proc(object):
 
     def pack(self):
         # buy a new pack only if there is no unassigned items
-        if self.fme.session().unassigned():
+        if not self.fme.session().unassigned():
             logger.info('Buying a new pack now!')
             self.fme.session().buyPack(100)
         self.unassigned()
@@ -131,80 +131,11 @@ class Proc(object):
         return self.fme.session().__request__('POST', url, data=data)
 
 
-class Worker(object):
-
-    def __init__(self):
-        self.tasks = []
-
-    def register_task(self, name, func, interval, delay=0):
-        self.tasks.append(Task(name, func, interval, delay))
-
-    def do_work(self):
-        for t in self.tasks:
-            t.execute()
-
-    def set_task_interval(self, task_name, new_value):
-        return [t.set_interval(new_value) for t in self.tasks if t.name == task_name]
-
-class Flipper(Worker):
-
-    def __init__(self, fme, conf):
-        super(Flipper, self).__init__()
-        self.fme = fme
-        self.rid = conf['resourceId']
-        self.max_bid = conf['maxBid']
-        self.mkt_price_history = price.PriceHistory([])
-        defs = self.fme.session().searchDefinition(self.rid)
-        defs = [p for p in defs if p['resourceId'] == self.rid]
-        if len(defs) == 1:
-            self.definion = defs[0]
-            self.register_task('flipper.update_price_history', self.update_price, 3600)
-            self.register_task('flipper.update_price', self.update_price, 1200)
-            self.register_task('flipper.attempt', self.attempt, 10)
-        else:
-            logger.warning("%s definitions found for rid=%s. Flipper disabled.",
-                           len(defs), self.rid)
-
-    def update_price(self):
-        logger.info('TODO: update price')
-        _, mkt_price, _ = self.fme.tm.search_min_price(self.rid)
-        self.mkt_price_history.add(mkt_price)
-
-    def update_price_history(self):
-        logger.info('TODO: update price history')
-
-    def attempt(self):
-        logger.info('TODO: attempt to buy')
-
-
-class Task(object):
-
-    def __init__(self, name, func, interval, delay):
-        self.name = name
-        self.func = func
-        self.interval = interval
-        self.last_execution_time = 0 if delay == 0 else time.time() + delay
-
-    def execute(self):
-        if time.time() - self.last_execution_time > self.interval:
-            self.func()
-            self.last_execution_time = time.time()
-
-    def set_interval(self, new_value):
-        old_value, self.interval = self.interval, new_value
-        return old_value
-
-
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
         datefmt='%m-%d %H:%M:%S',
         level=logging.INFO)
-    flipper = Flipper(None, None)
-    for _ in range(60):
-        flipper.do_work()
-        time.sleep(1)
-
 
 
 if __name__ == '__main__':
