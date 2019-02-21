@@ -99,7 +99,7 @@ class TransferMarket(object):
             logger.debug('search returned %s items (%s)',
                          len(search_result),
                          [(x['buyNowPrice'], x['expires']) for x in search_result])
-            if search_result:
+            if not search_result:
                 if attempt == mkt_max:
                     logger.debug('break - nothing on market')
                     break
