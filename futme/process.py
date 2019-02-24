@@ -99,7 +99,7 @@ class Proc(object):
               (item_type == 'custom' and card_type == 11)): # Badge
             action = self.DISCARD
         elif item_type == 'misc':
-            if card_type == 231: # MiscCoins
+            if card_type in [231, 233]: # MiscCoins, Bronze Pack
                 action = self.REDEEM
         elif item_type in ['fitnessCoach', 'gkCoach', 'headCoach', 'manager']:
             action = self.DISCARD if item_id in self.fme.session().duplicates else self.KEEP
