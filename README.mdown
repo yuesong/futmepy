@@ -77,7 +77,8 @@ The same dictionary data structure represents both players and non-player items.
 - `owners` - int. # of owners, e.g. `1` means first owner. player only. `None` for non-player
 - `pile` - int
     - `0` - sold
-    - `5` - listed, listing expired, or on transfer list but inactive
+    - `5` - on tradepile (actively listed, listing expired, or on transfer list but inactive)
+    - `6` - unassigned
     - `7` - not listed
 - `playStyle` - int. chemistry style
 - `position` - string. example: `'CDM'`
@@ -136,7 +137,7 @@ The same dictionary data structure represents both players and non-player items.
 - `resourceId` - int. player version id. same as `assetId` for the base version, but different for other versions such as TOTW. `fut.Core.searchDefinition()` returns all versions of a play given its `assetId`
 - `sellerEstablished` - int. ???. always `0`?
 - `sellerId` - int. ???. always `0`?
-- `sellerName` - ???. always `None`?
+- `sellerName` - examples: `None`, `'FIFA UT'`
 - `startingBid` - example: `150`
 - `statsList` - array
 - `suspension` - example: `0`
