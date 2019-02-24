@@ -30,9 +30,9 @@ class AutoTrader:
     def _create_traders(self):
         traders = []
         conf = datafile.load_json(AutoTrader._CONF_FILE)
-        for ttype in ['buy', 'flip']:
+        for ttype in ['flip', 'buy']:
             for c in conf.get(ttype, []):
-                if c['enable']:
+                if c:
                     pdef = self.search_definition(c['rid'])
                     if pdef is not None:
                         if ttype == 'buy':
@@ -86,25 +86,39 @@ class BaseTrader:
     def run(self):
         self.worker.run()
 
-    def set_state(self, new_state):
+    def set_state(self, new_state, reason=''):
+        if reason != '':
+            reason = ' ({})'.format(reason)
         if self.state != new_state:
-            logger.info('TR[%s] State change: %s -> %s', self.rid, self.state, new_state)
+            logger.info('TR[%s] State change: %s -> %s%s',
+                        self.rid, self.state, new_state, reason)
             self.state = new_state
 
 class Buyer(BaseTrader):
 
     def __init__(self, fme, pdef, conf):
         super().__init__(fme, pdef)
-        self.bid = conf['bid']
-        # self.strategy = conf['strategy']
+        self.suggested_bid = conf['bid']
         self.interval = conf.get('interval', 10)
-        self.bought = None
+        self.flexbid = conf.get('flexbid', False)
+        self.discount = conf.get('discount', 0.9)
+
+        self.bid = 0
+        self.mkt_price = 0
         self.quick_price = 0
         self.attempts = 0
+        self.bought = None
+
+        self.worker.register_task('update_bid', self.update_bid, 1200)
         self.worker.register_task('update_quick_price', self.update_quick_price, 1800)
         self.worker.register_task('attempt', self.attempt, self.interval)
 
     def attempt(self):
+        if self.bid == 0:
+            self.set_state('paused', 'nothing in market')
+            return
+
+        self.set_state('active')
         self.attempts += 1
         won = self.fme.tm.buy_now(self.rid, self.bid)
         if won is not None:
@@ -117,13 +131,25 @@ class Buyer(BaseTrader):
                 self.fme.session().sendToClub(item_id)
             self.set_state('done')
 
+    def update_bid(self):
+        if self.flexbid:
+            p, mp, _ = self.fme.tm.search_min_price(self.rid)
+            if p is None:
+                self.mkt_price = 0
+                self.bid = 0
+            else:
+                self.mkt_price = mp
+                adjusted_bid = min(self.suggested_bid, price.pround(self.mkt_price * self.discount))
+                min_price = price.pincrement(p['discardValue'])
+                self.bid = max(min_price, adjusted_bid)
+
     def update_quick_price(self):
         self.quick_price = price.quick(self.rid)
 
     def status_str(self):
-        return 'bid={} qp={} atps={} paid={}'.format(
-            self.bid, self.quick_price, self.attempts,
-            self.bought['lastSalePrice'] if self.bought is not None else 'n/a')
+        return 'bid={} mp={} qp={} atps={} paid={}'.format(
+            self.bid, self.mkt_price, self.quick_price, self.attempts,
+            self.bought['lastSalePrice'] if self.bought is not None else 'na')
 
 
 
@@ -154,13 +180,13 @@ class Flipper(BaseTrader):
 
 
     def attempt(self):
-        self.attempts += 1
         # no more than 2 active flips for an item at any give time
         if self._num_listed() >= 2:
-            self.set_state('paused')
+            self.set_state('paused', '2 active flips max')
             return
 
         self.set_state('active')
+        self.attempts += 1
         won = self.fme.tm.buy_now(self.rid, self.bid)
         if won is not None:
             # get current market price in case it increasd.
