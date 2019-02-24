@@ -11,9 +11,13 @@ logger = logging.getLogger(__name__)
 
 DB_DIR = os.path.expanduser('~/.futme')
 
+def last_modified(filename):
+    filepath = dbfilepath(filename)
+    return os.path.getmtime(filepath)
+
 def load_json(filename):
     data = []
-    filepath = os.path.join(DB_DIR, filename)
+    filepath = dbfilepath(filename)
     try:
         with codecs.open(filepath, 'r', encoding='utf-8') as f:
             data = json.load(f)
@@ -22,7 +26,7 @@ def load_json(filename):
     return data
 
 def save_json(data, filename):
-    filepath = os.path.join(DB_DIR, filename)
+    filepath = dbfilepath(filename)
     try:
         with codecs.open(filepath, 'w', encoding='utf-8') as f:
             json.dump(data, f, indent=4, sort_keys=True)
@@ -30,7 +34,7 @@ def save_json(data, filename):
         logger.warn('Error saving json to %s: %s', filename, e)
 
 def save_tsv(rows, filename):
-    filepath = os.path.join(DB_DIR, filename)
+    filepath = dbfilepath(filename)
     try:
         with open(filepath, 'w') as f:
             tsv_writer = csv.writer(f, delimiter='\t', encoding='utf-8')
@@ -38,3 +42,6 @@ def save_tsv(rows, filename):
                 tsv_writer.writerow(row)
     except Exception as e:
         logger.warn('Error saving data to %s: %s', filename, e)
+
+def dbfilepath(filename):
+    return os.path.join(DB_DIR, filename)

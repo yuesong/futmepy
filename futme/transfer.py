@@ -14,6 +14,10 @@ cache_regions.update({
     'transfer_tradepile':{
         'expire': 10,
         'type': 'memory'
+    },
+    'transfer_market_price':{
+        'expire': 1200,
+        'type': 'memory'
     }
 })
 
@@ -25,24 +29,24 @@ class TransferMarket(object):
         self.fme = fme
         self.tradepile = Tradepile(fme)
 
-    def price_players(self, players, search_mkt_price=False, threshold_price=0):
-        result = []
-        append = 'qp={}'
+    def price_players(self, players, search_mkt_price=False):
+        append = 'qp={:5} {}'
         if search_mkt_price:
-            append += ' mp={} {}'
+            append = 'mp={} ' + append
         sfmt = self.fme.disp.format(players, append=append)
         for p in players:
             q_prc = price.quick(p)
-            args = [q_prc]
-            keep = q_prc >= threshold_price
+            phist = price.history(p)
+            ph7d, ph30d, ph90d = phist.slice(7), phist.slice(30), phist.slice(90)
+            phist_str = 'hl7d={}/{} hl30d={}/{} hl90d={}/{}'.format(
+                ph7d.high().value, ph7d.low().value,
+                ph30d.high().value, ph30d.low().value,
+                ph90d.high().value, ph90d.low().value)
+            args = [q_prc, phist_str]
             if search_mkt_price:
-                _, mkt_prc, seen = self.search_min_price(p)
-                args.extend([mkt_prc, seen])
-                keep = mkt_prc >= threshold_price
+                _, mkt_prc, _ = self.search_min_price(p)
+                args.insert(0, mkt_prc)
             logging.info(self.fme.disp.sprint(sfmt, p, *args))
-            if keep:
-                result.append(p)
-        return result
 
     def price_listed_players(self, max_rating=None, normal_only=True, quick=True, sell=False):
 
@@ -135,6 +139,11 @@ class TransferMarket(object):
         seen = [(x['buyNowPrice'], x['expires']) for x in seen]
         return (current_player, current, seen if seen_prices is None else seen[:seen_prices])
 
+    @cache_region('transfer_market_price', 'get_market_price')
+    def get_market_price_cached(self, player):
+        _, mp, _ = self.search_min_price(player)
+        return mp
+
     def sell(self, item_id, buy_now):
         session = self.fme.session()
         if session.sendToTradepile(item_id):
@@ -208,7 +217,8 @@ class Tradepile(object):
 
     @cache_region('transfer_tradepile', 'all')
     def all(self):
-        return self.fme.session().tradepile()
+        tp = self.fme.session().tradepile()
+        return sorted(tp, key=lambda x: x['discardValue'], reverse=True)
 
     def refresh(self):
         region_invalidate(self.all, 'transfer_tradepile', 'all')

@@ -25,7 +25,7 @@ cache_regions.update({
         'expire': 3600,
         'type': 'memory'
     }
-})    
+})
 
 def pbound(price):
     if price < 0:
@@ -36,11 +36,11 @@ def pbound(price):
 
 def pround(price):
     price = pbound(price)
-    
+
     for bucket_upper_bound, step_size in PRICE_STEP_SIZES:
         if price < bucket_upper_bound:
             return int(round(price / float(step_size))) * step_size
-    
+
     return int(round(price / 1000.0)) * 1000
 
 def pincrement(price, steps = 1):
@@ -78,10 +78,12 @@ def history(player):
     def futbin_price_graph(gtype):
         url = 'https://www.futbin.com/19/playerGraph?type={}&year=19&player={}'.format(gtype, rid)
         data = futbin_get_json(url)
-        if data is None: return
-        for k, v in data['ps']:
-            t = int(k/1000)
-            d[t] = PricePoint(t, v)
+        if data is None:
+            return
+        if 'ps' in data:
+            for k, v in data['ps']:
+                t = int(k/1000)
+                d[t] = PricePoint(t, v)
 
     # order is important as we want more recent data to override older want
     futbin_price_graph('daily_graph')
@@ -109,6 +111,9 @@ class PriceHistory(object):
 
     def low(self):
         return min(self.points, key=lambda x: x.value)
+
+    def latest_price(self):
+        return self.points[0].value if self.points else None
 
     def slice(self, *days_offsets):
         """
