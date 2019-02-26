@@ -44,7 +44,7 @@ class TransferMarket(object):
                 ph90d.high().value, ph90d.low().value)
             args = [q_prc, phist_str]
             if search_mkt_price:
-                _, mkt_prc, _ = self.search_min_price(p)
+                mkt_prc = self.get_market_price_cached(p)
                 args.insert(0, mkt_prc)
             logging.info(self.fme.disp.sprint(sfmt, p, *args))
 
