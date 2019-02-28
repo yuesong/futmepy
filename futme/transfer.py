@@ -1,12 +1,13 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import traceback
+from collections import Counter
 
 import fut
 from beaker.cache import cache_region, cache_regions, region_invalidate
 
-from . import core
-from . import price
+from . import core, price, util
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,35 @@ class TransferMarket(object):
         self.fme = fme
         self.tradepile = Tradepile(fme)
 
+    def tradepile_cleanup_targets(self, keep_all_above_rating=83, sell_all_below_rating=75):
+        a = self.tradepile.inactive()
+        counts = dict(Counter([x['resourceId'] for x in a]))
+
+        targets = []
+        dups = {}
+        for x in a:
+            rid, rating, rf = x['resourceId'], x['rating'], x['rareflag']
+            if rating > keep_all_above_rating or rf not in [0, 1]:
+                # skip high-rating or non-regular cards
+                continue
+            elif rf == 0:
+                # sell all common cards
+                targets.append(x)
+            elif rating < sell_all_below_rating:
+                # sell all low-rating cards
+                targets.append(x)
+            elif counts[rid] > 1:
+                # record the dups - they need further processing
+                dups[rid] = dups.get(rid, []) + [x]
+
+        for a in dups.values():
+            # keep the dup item with loyalty bonues and/or non-basic chem style
+            a.sort(key=lambda x: x['loyaltyBonus'] * 100000 + x['playStyle'], reverse=True)
+            targets.extend(a[1:])
+
+        return sorted(targets, key=util.sorter_key())
+
+
     def price_players(self, players, search_mkt_price=False):
         append = 'qp={:5} {}'
         if search_mkt_price:
@@ -48,29 +78,6 @@ class TransferMarket(object):
                 args.insert(0, mkt_prc)
             logging.info(self.fme.disp.sprint(sfmt, p, *args))
 
-    def price_listed_players(self, max_rating=None, normal_only=True, quick=True, sell=False):
-
-        def match(p):
-            if p['itemType'] != 'player' or p['tradeState'] is not None:
-                return False
-            if max_rating is not None and p['rating'] > max_rating:
-                return False
-            if normal_only and p['rareflag'] > 1:
-                return False
-            return True
-
-        target = [p for p in self.fme.session().tradepile() if match(p)]
-        target.sort(key=lambda x: x['discardValue'], reverse=True)
-        sfmt = self.fme.disp.format(target, append='mp={} {}')
-        for p in target:
-            if quick:
-                pri, seen = price.quick(p), ''
-            else:
-                _, pri, seen = self.search_min_price(p)
-            logger.info(self.fme.disp.sprint(sfmt, p, pri, seen))
-            if sell:
-                self.fme.session().sell(p['id'], price.pincrement(pri, steps=-1), pri)
-
 
     def search_min_price(self, player, seen_prices=3):
         mkt_min, mkt_max = price.MIN_PRICE, price.MAX_PRICE
@@ -78,10 +85,15 @@ class TransferMarket(object):
             rid = player
         else:
             rid = player['resourceId']
-            if player['marketDataMinPrice'] is not None:
-                mkt_min = player['marketDataMinPrice']
-            if player['marketDataMaxPrice'] is not None:
-                mkt_max = player['marketDataMaxPrice']
+            p_mkt_min, p_mkt_max = player['marketDataMinPrice'], player['marketDataMaxPrice']
+            if p_mkt_min is not None and p_mkt_min > 0:
+                mkt_min = p_mkt_min
+            if p_mkt_max is not None and p_mkt_max > 0:
+                mkt_max = p_mkt_max
+            # debug print to track down a bug:
+            if p_mkt_min <= 0 or p_mkt_max <= 0:
+                logger.error('marketDataMinPrice or marketDataMaxPrice of a player is <= 0:')
+                logger.info(player)
 
         session = self.fme.session()
         current_player = None
@@ -144,14 +156,51 @@ class TransferMarket(object):
         _, mp, _ = self.search_min_price(player)
         return mp
 
-    def sell(self, item_id, buy_now):
-        session = self.fme.session()
-        if session.sendToTradepile(item_id):
-            return session.sell(item_id, price.pincrement(buy_now, steps=-1), buy_now)
+    def sell(self, item, buy_now, starting_bid=None):
+        '''List an item for sale
+
+        :param item: the item or item id.
+        '''
+        if isinstance(item, dict):
+            item_id = item['id']
+            send_to_tradepile_first = (item['pile'] != 5)
         else:
+            item_id = item
+            send_to_tradepile_first = True
+
+        if starting_bid is None:
+            starting_bid = price.pincrement(buy_now, steps=-1)
+
+        if starting_bid >= buy_now:
+            logger.error('starting_bid %s is >= buy_now %s. Abort selling item %s',
+                         starting_bid, buy_now, item)
             return None
 
+        session = self.fme.session()
+        if send_to_tradepile_first:
+            if session.sendToTradepile(item_id):
+                return session.sell(item_id, starting_bid, buy_now)
+            else:
+                logger.warn('Failed to send item to tradepile. Abort selling item %s', item)
+                return None
+        else:
+            return session.sell(item_id, starting_bid, buy_now)
+
+
+    def sell_all(self, items):
+        sfmt = self.fme.disp.format(items, append='mp={}')
+        for p in items:
+            mkt_prc = self.get_market_price_cached(p)
+            logger.info(self.fme.disp.sprint(sfmt, p, mkt_prc))
+            self.sell(p, mkt_prc)
+
+
     def buy_now(self, resource_id, max_buy):
+        if max_buy <= 0:
+            logging.error('There is a bug! max_buy passed to buy_now() is %s for rid %s',
+                          max_buy, resource_id)
+            return None
+
         session = self.fme.session()
         failed_bid_attempts = 0
         while failed_bid_attempts < 3:
@@ -218,7 +267,7 @@ class Tradepile(object):
     @cache_region('transfer_tradepile', 'all')
     def all(self):
         tp = self.fme.session().tradepile()
-        return sorted(tp, key=lambda x: x['discardValue'], reverse=True)
+        return sorted(tp, key=util.sorter_key())
 
     def refresh(self):
         region_invalidate(self.all, 'transfer_tradepile', 'all')
