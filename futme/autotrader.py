@@ -198,6 +198,10 @@ class Flipper(BaseTrader):
         self.worker.register_task('attempt', self.attempt, self.interval)
 
     def attempt(self):
+        if self.bid == 0:
+            self.set_state('paused', 'nothing in market')
+            return
+
         # no more than configured active flips (default 2) for an item at any give time
         if self._num_listed() >= self.maxflips:
             self.set_state('paused', '{} active flips max'.format(self.maxflips))
@@ -213,13 +217,13 @@ class Flipper(BaseTrader):
         self.attempts += 1
         won = self.fme.tm.buy_now(self.rid, self.bid)
         if won is not None:
+            # get current market price - we are not selling for less
+            _, current_mkt_price, _ = self.fme.tm.search_min_price(self.rid)
             if self.sellfor != 0:
-                self.fme.tm.sell(won['id'], self.sellfor)
+                self.fme.tm.sell(won['id'], max(self.sellfor, current_mkt_price))
             else:
-                # get current market price in case it increasd.
-                _, current_mkt_price, _ = self.fme.tm.search_min_price(self.rid)
                 self.fme.tm.sell(won['id'], max(self.mkt_price, current_mkt_price))
-                # TODO update mkt_price and bid
+            # TODO update mkt_price and bid
 
     def _num_listed(self):
         '''Returns the number of active listings'''
