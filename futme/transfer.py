@@ -59,20 +59,24 @@ class TransferMarket(object):
         return sorted(targets, key=util.sorter_key())
 
 
-    def price_players(self, players, search_mkt_price=False):
-        append = 'qp={:5} {}'
+    def price_players(self, players, inc_history=False, search_mkt_price=False):
+        append = 'qp={:5}'
+        if inc_history:
+            append += ' {}'
         if search_mkt_price:
             append = 'mp={} ' + append
         sfmt = self.fme.disp.format(players, append=append)
         for p in players:
             q_prc = price.quick(p)
-            phist = price.history(p)
-            ph7d, ph30d, ph90d = phist.slice(7), phist.slice(30), phist.slice(90)
-            phist_str = 'hl7d={}/{} hl30d={}/{} hl90d={}/{}'.format(
-                ph7d.high().value, ph7d.low().value,
-                ph30d.high().value, ph30d.low().value,
-                ph90d.high().value, ph90d.low().value)
-            args = [q_prc, phist_str]
+            args = [q_prc]
+            if inc_history:
+                phist = price.history(p)
+                ph7d, ph30d, ph90d = phist.slice(7), phist.slice(30), phist.slice(90)
+                phist_str = 'hl7d={}/{} hl30d={}/{} hl90d={}/{}'.format(
+                    ph7d.high().value, ph7d.low().value,
+                    ph30d.high().value, ph30d.low().value,
+                    ph90d.high().value, ph90d.low().value)
+                args.append(phist_str)
             if search_mkt_price:
                 mkt_prc = self.get_market_price_cached(p)
                 args.insert(0, mkt_prc)
