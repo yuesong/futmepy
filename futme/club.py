@@ -3,7 +3,7 @@
 import logging
 import sys
 
-from . import datafile
+from . import datafile, util
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +11,23 @@ class Club(object):
 
     def __init__(self, fme):
         self.fme = fme
+
+    def matchup(self, level=None, nations=None, leagues=None, teams=None):
+        players = {}
+        def add_all(lst):
+            for p in lst:
+                players[p['id']] = p
+
+        if nations is not None:
+            add_all(self.by_nations(nations=nations, level=level))
+        if leagues is not None:
+            add_all(self.by_leagues(leagues=leagues, level=level))
+        if teams is not None:
+            add_all(self.by_teams(teams=teams, level=level))
+        tradable = lambda p: (not p['untradeable']) and p['rareflag'] in [0, 1]
+        players = [p for p in list(players.values()) if tradable(p)]
+        return sorted(players, key=util.sorter_key())
+
 
     def by_teams(self, teams, level=None):
         """Find all club players of specific teams
@@ -31,15 +48,15 @@ class Club(object):
             all.extend(players)
         return all
 
-    def by_league(self, league, level=None):
-        """Find all club players from a specific league
+    def by_leagues(self, leagues, level=None):
+        """Find all club players from specific leagues
 
-        :param league: league id, abbr, or name.
+        :param league: single or a list of league ids, abbrs, or names.
         :param level: gold/silver/bronze
         :return: a list of players
         """
         all = []
-        ids = [x['id'] for x in self.fme.lu.leagues.find(league)]
+        ids = [x['id'] for x in self.fme.lu.leagues.find(leagues)]
         for id in ids:
             players = []
             while True:
