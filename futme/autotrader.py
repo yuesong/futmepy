@@ -203,8 +203,9 @@ class Flipper(BaseTrader):
             return
 
         # no more than configured active flips (default 2) for an item at any give time
-        if self._num_listed() >= self.maxflips:
-            self.set_state('paused', '{} active flips max'.format(self.maxflips))
+        num_listed = self._num_listed()
+        if num_listed >= self.maxflips:
+            self.set_state('paused', '{} active flips. {} max'.format(num_listed, self.maxflips))
             return
 
         # should not sell for loss
