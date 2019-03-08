@@ -185,18 +185,19 @@ class TransferMarket(object):
             if session.sendToTradepile(item_id):
                 return session.sell(item_id, starting_bid, buy_now)
             else:
-                logger.warn('Failed to send item to tradepile. Abort selling item %s', item)
+                logger.warning('Failed to send item to tradepile. Abort selling item %s', item)
                 return None
         else:
             return session.sell(item_id, starting_bid, buy_now)
 
 
-    def sell_all(self, items):
+    def sell_all(self, items, price_check=lambda x: True):
         sfmt = self.fme.disp.format(items, append='mp={}')
         for p in items:
             mkt_prc = self.get_market_price_cached(p)
-            logger.info(self.fme.disp.sprint(sfmt, p, mkt_prc))
-            self.sell(p, mkt_prc)
+            if price_check(mkt_prc):
+                logger.info(self.fme.disp.sprint(sfmt, p, mkt_prc))
+                self.sell(p, mkt_prc)
 
 
     def buy_now(self, resource_id, max_buy):
