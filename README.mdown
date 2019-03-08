@@ -209,6 +209,65 @@ Regular Non-promotional pack IDs are:
 - [FUT Lookups](https://github.com/TrevorMcCormick/futmarket)
 
 # Misc
-Install local fut package:
+## Install local fut package:
 
 ```pip install file:///Users/yuesong/Work/projects/fut/dist/fut-0.4.2.tar.gz```
+
+## Setup GCP VM
+- Create f1-micro VM (Debina 9. Name `futme`)
+- Ssh: `gcloud compute ssh futme` (using the default project and zone)
+- __(futme)__ Intall Python 3.7.2:
+```
+sudo apt-get update
+sudo apt-get install build-essential checkinstall libsqlite3-dev sqlite3 \
+    bzip2 libbz2-dev zlib1g-dev libssl-dev openssl libgdbm-dev liblzma-dev \
+    libreadline-dev libncursesw5-dev libffi-dev uuid-dev
+cd /usr/src
+sudo wget https://www.python.org/ftp/python/3.7.2/Python-3.7.2.tgz
+sudo tar xzf Python-3.7.2.tgz
+cd Python-3.7.2
+sudo ./configure --enable-optimizations
+sudo make altinstall
+```
+- At this point, we can create an image `debian9-python372` for future need of Python 3.7.2:
+```
+gcloud compute images create debian9-python372 --source-disk futme
+```
+- __(futme)__ Make directories:
+```
+cd
+mkdir futmepy
+mkdir .futme
+```
+- __(local)__ Copy fut library:
+```
+gcloud compute scp ~/Work/projects/fut/dist/fut-0.4.2.tar.gz futme:~/futmepy
+```
+- __(futme)__ Setup Python environment:
+```
+cd futmepy
+python3.7 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install requests
+pip install Beaker
+pip install twilio
+pip install unicodecsv
+pip install file:///home/yuesong_c_gmail_com/futmepy/fut-0.4.2.tar.gz
+```
+- __(local)__ Deploy futmepy:
+```
+export INSTANCE=futme
+gcloud compute scp ~/.futme/credentials.json $INSTANCE:~/.futme/
+gcloud compute scp ~/.futme/autotrader.json $INSTANCE:~/.futme/
+gcloud compute scp --recurse futme $INSTANCE:~/futmepy/
+gcloud compute scp *.py $INSTANCE:~/futmepy/
+gcloud compute scp gcp/*.sh $INSTANCE:~
+```
+
+## Run futme on GCP
+```
+cd futmepy
+source venv/bin/activate
+nohup python main.py &> futme.log&
+```
