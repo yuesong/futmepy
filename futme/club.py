@@ -12,6 +12,21 @@ class Club(object):
     def __init__(self, fme):
         self.fme = fme
 
+    def all_players(self, level='gold', max_page=10000):
+        return self.club_all_pages(level=level)
+
+    def expandables(self):
+        '''Returns normal players that are: on transfer list, unassinged, or untradeable
+        '''
+        def normal(lst):
+            return [x for x in lst if x['rareflag'] in [0, 1]]
+
+        result = [x for x in normal(self.club_all_pages(level='gold')) if x['untradeable']]
+        result += normal(self.fme.tm.tradepile.inactive())
+        result += normal(self.fme.session().unassigned())
+        return result
+
+
     def matchup(self, level=None, nations=None, leagues=None, teams=None):
         players = {}
         def add_all(lst):
@@ -36,16 +51,10 @@ class Club(object):
         :param level: gold/silver/bronze
         :return: a list of players
         """
-        all = []
         ids = [x['id'] for x in self.fme.lu.teams.find(teams)]
+        all = []
         for id in ids:
-            players = []
-            while True:
-                page = self.fme.session().club(level=level, start=len(players), club=id)
-                if len(page) == 0:
-                    break
-                players.extend(page)
-            all.extend(players)
+            all.extend(self.club_all_pages(level=level, club=id))
         return all
 
     def by_leagues(self, leagues, level=None):
@@ -55,16 +64,10 @@ class Club(object):
         :param level: gold/silver/bronze
         :return: a list of players
         """
-        all = []
         ids = [x['id'] for x in self.fme.lu.leagues.find(leagues)]
+        all = []
         for id in ids:
-            players = []
-            while True:
-                page = self.fme.session().club(level=level, start=len(players), league=id)
-                if len(page) == 0:
-                    break
-                players.extend(page)
-            all.extend(players)
+            all.extend(self.club_all_pages(level=level, league=id))
         return all
 
     def by_nations(self, nations, level=None):
@@ -74,27 +77,16 @@ class Club(object):
         :param level: gold/silver/bronze
         :return: a list of players
         """
-        all = []
         ids = [x['id'] for x in self.fme.lu.nations.find(nations)]
+        all = []
         for id in ids:
-            players = []
-            while True:
-                page = self.fme.session().club(level=level, start=len(players), nationality=id)
-                if len(page) == 0:
-                    break
-                players.extend(page)
-            all.extend(players)
+            all.extend(self.club_all_pages(level=level, nationality=id))
         return all
 
     def special(self, rareflags=[]):
         """Find all special players
         """
-        players = []
-        while True:
-            page = self.fme.session().club(start=len(players), rare=True)
-            if len(page) == 0:
-                break
-            players.extend(page)
+        players = self.club_all_pages(rare=True)
         return [p for p in players if p['rareflag'] in rareflags] if rareflags else players
 
     def club_all_pages(self, max_page=sys.maxsize, **kwargs):
@@ -108,22 +100,4 @@ class Club(object):
                 break
         return players
 
-    def dump_players(self, level='gold', max_page=10000):
-        logger.info('Start dumping club players...')
-        players = []
-        for _ in range(0, max_page):
-            page = self.fme.session().club(level=level, start=len(players))
-            if len(page) == 0:
-                break
-            players.extend(page)
 
-        filename = 'futme_club_players_' + level + '.json'
-        self.fme.lu.save_json(players, filename)
-
-        filename = 'futme_club_players_' + level + '.tsv'
-        rows = [['iid', 'aid', 'rid', 'name', 'pos', 'rat', 'rf', 'tr', 'club', 'league', 'nation', 'dv', 'ls']]
-        for p in players:
-            rows.append(self.fme.disp.to_list(p))
-        datafile.save_tsv(rows, filename)
-
-        logger.info('Saved %s club players (level=%s)', len(players), level)
