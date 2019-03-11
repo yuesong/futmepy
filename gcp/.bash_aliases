@@ -1,0 +1,7 @@
+alias ll='ls -l'
+alias la='ls -A'
+alias l='ls -CF'
+alias c='~/check.sh'
+alias s='~/start.sh'
+alias t='~/taillog.sh'
+alias k='~/killit.sh'

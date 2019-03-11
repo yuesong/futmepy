@@ -257,17 +257,9 @@ pip install file:///home/yuesong_c_gmail_com/futmepy/fut-0.4.2.tar.gz
 ```
 - __(local)__ Deploy futmepy:
 ```
-export INSTANCE=futme
-gcloud compute scp ~/.futme/credentials.json $INSTANCE:~/.futme/
-gcloud compute scp ~/.futme/autotrader.json $INSTANCE:~/.futme/
-gcloud compute scp --recurse futme $INSTANCE:~/futmepy/
-gcloud compute scp *.py $INSTANCE:~/futmepy/
-gcloud compute scp gcp/*.sh $INSTANCE:~
-```
-
-## Run futme on GCP
-```
-cd futmepy
-source venv/bin/activate
-nohup python main.py &> futme.log&
+gcloud compute scp ~/.futme/credentials.json futme:~/.futme/
+gcloud compute scp ~/.futme/autotrader.json futme:~/.futme/
+gcloud compute scp --recurse futme futme:~/futmepy/
+gcloud compute scp *.py futme:~/futmepy/
+gcloud compute scp gcp/.bash_aliases gcp/* futme:~
 ```
