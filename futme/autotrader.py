@@ -6,7 +6,7 @@ import time
 import fut
 from beaker.cache import cache_region, cache_regions, region_invalidate
 
-from . import core, datafile, display, price, timeutil, worker
+from . import core, datafile, display, price, timeutil, worker, util
 
 logger = logging.getLogger(__name__)
 
@@ -51,13 +51,7 @@ class AutoTrader:
             logger.error('Invaid conf for rid %s: flexbid is False but bid is 0', rid)
             return None
 
-        defs = self.fme.session().searchDefinition(rid)
-        defs = [p for p in defs if p['resourceId'] == rid]
-        if len(defs) == 1:
-            return defs[0]
-        else:
-            logger.error("Invalid rid %s: exactly 1 def expected but %s found", rid, len(defs))
-            return None
+        return util.searchDefinition(self.fme.session(), rid)
 
     def print_trader_confs(self, traders):
         tname_width = display.max_width([t.trader_name() for t in traders])
