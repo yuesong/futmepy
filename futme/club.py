@@ -101,3 +101,5 @@ class Club(object):
         return players
 
 
+    def by_rid(self, rid):
+        return [x for x in self.fme.session().club(defId=rid) if x['resourceId'] == rid]
