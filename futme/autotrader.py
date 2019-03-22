@@ -187,7 +187,6 @@ class Flipper(BaseTrader):
         super().__init__(fme, pdef, conf)
         self.maxflips = conf['maxflips']
         self.sellfor = conf['sellfor']
-        self.price_history = price.history(self.rid)
         self.worker.register_task('update_bid', self.update_bid, 1200)
         self.worker.register_task('attempt', self.attempt, self.interval)
 
