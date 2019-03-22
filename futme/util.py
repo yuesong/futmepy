@@ -20,6 +20,9 @@ def sorter(item, descending=True):
 def sorter_key(descending=True):
     return lambda x: sorter(x)
 
+def psorted(players):
+    return sorted(players, key=sorter_key())
+
 def sms(msg):
     client.messages.create(body=msg, from_=twilio['from'], to=twilio['to'])
 
