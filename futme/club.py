@@ -15,6 +15,12 @@ class Club(object):
     def all_players(self, level='gold', max_page=10000):
         return self.club_all_pages(level=level)
 
+    def special(self, rareflags=[]):
+        """Find all special players
+        """
+        players = self.club_all_pages(rare=True)
+        return [p for p in players if p['rareflag'] in rareflags] if rareflags else players
+
     def expandables(self):
         '''Returns normal players that are: on transfer list, unassinged, or untradeable
         '''
@@ -26,6 +32,10 @@ class Club(object):
         result += normal(self.fme.session().unassigned())
         return result
 
+    def tradeable_totw(self, max_rating=80):
+        players = self.special(rareflags=[3])
+        players = [x for x in players if not x['untradeable'] and x['rating'] <= max_rating]
+        return util.psorted(players)
 
     def matchup(self, level=None, nations=None, leagues=None, teams=None):
         players = {}
@@ -41,7 +51,7 @@ class Club(object):
             add_all(self.by_teams(teams=teams, level=level))
         tradable = lambda p: (not p['untradeable']) and p['rareflag'] in [0, 1]
         players = [p for p in list(players.values()) if tradable(p)]
-        return sorted(players, key=util.sorter_key())
+        return util.psorted(players)
 
 
     def by_teams(self, teams, level=None):
@@ -82,12 +92,6 @@ class Club(object):
         for id in ids:
             all.extend(self.club_all_pages(level=level, nationality=id))
         return all
-
-    def special(self, rareflags=[]):
-        """Find all special players
-        """
-        players = self.club_all_pages(rare=True)
-        return [p for p in players if p['rareflag'] in rareflags] if rareflags else players
 
     def club_all_pages(self, max_page=sys.maxsize, **kwargs):
         players = []

@@ -2,12 +2,13 @@
 
 import logging
 import traceback
+import time
 from collections import Counter
 
 import fut
 from beaker.cache import cache_region, cache_regions, region_invalidate
 
-from . import core, price, util
+from . import core, price, util, timeutil
 
 logger = logging.getLogger(__name__)
 
@@ -56,7 +57,7 @@ class TransferMarket(object):
             a.sort(key=lambda x: x['loyaltyBonus'] * 100000 + x['playStyle'], reverse=True)
             targets.extend(a[1:])
 
-        return sorted(targets, key=util.sorter_key())
+        return util.psorted(targets)
 
 
     def price_players(self, players, inc_history=False, search_mkt_price=False):
@@ -82,6 +83,20 @@ class TransferMarket(object):
                 args.insert(0, mkt_prc)
             logging.info(self.fme.disp.sprint(sfmt, p, *args))
 
+    def trade_rec(self, players, search_mkt_price=False):
+        append = 'tn={:3}d ts={:4}'
+        append += ' mp={:5}' if search_mkt_price else ' qp={:5}'
+        append += ' pr={:5} {}'
+        sfmt = self.fme.disp.format(players, append=append)
+        for p in players:
+            tenure = timeutil.dur_days(time.time() - p['timestamp'])
+            prc = self.get_market_price_cached(p) if search_mkt_price else price.quick(p)
+            phist = price.history(p)
+            tscore = phist.trade_score(prc)
+            lsp = p['lastSalePrice']
+            profit = prc - lsp
+            profit_pct = 'all' if lsp == 0 else str(int(profit * 100.0/lsp)) + '%'
+            logging.info(self.fme.disp.sprint(sfmt, p, tenure, tscore, prc, profit, profit_pct))
 
     def search_min_price(self, player, seen_prices=3):
         mkt_min, mkt_max = price.MIN_PRICE, price.MAX_PRICE
@@ -155,8 +170,12 @@ class TransferMarket(object):
         seen = [(x['buyNowPrice'], x['expires']) for x in seen]
         return (current_player, current, seen if seen_prices is None else seen[:seen_prices])
 
-    @cache_region('transfer_market_price', 'get_market_price')
     def get_market_price_cached(self, player):
+        rid = player if isinstance(player, int) else player['resourceId']
+        return self._get_market_price_cached(rid)
+
+    @cache_region('transfer_market_price', 'get_market_price')
+    def _get_market_price_cached(self, player):
         _, mp, _ = self.search_min_price(player)
         return mp
 
@@ -272,7 +291,7 @@ class Tradepile(object):
     @cache_region('transfer_tradepile', 'all')
     def all(self):
         tp = self.fme.session().tradepile()
-        return sorted(tp, key=util.sorter_key())
+        return util.psorted(tp)
 
     def refresh(self):
         region_invalidate(self.all, 'transfer_tradepile', 'all')

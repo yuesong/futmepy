@@ -2,6 +2,7 @@
 
 import logging
 import time
+import statistics
 
 import requests
 from beaker.cache import cache_region, cache_regions
@@ -70,9 +71,12 @@ def quick(player):
     return int(s.replace(',', ''))
 
 
-@cache_region('price_history', 'history')
-def history(player):
+def history(player, include_hourly=0):
     rid = str(player['resourceId'] if isinstance(player, dict) else player)
+    return _history(rid, include_hourly)
+
+@cache_region('price_history', 'history')
+def _history(rid, include_hourly):
     d = {}
 
     def futbin_price_graph(gtype):
@@ -87,9 +91,13 @@ def history(player):
 
     # order is important as we want more recent data to override older want
     futbin_price_graph('daily_graph')
-    futbin_price_graph('da_yesterday')
-    futbin_price_graph('yesterday')
-    futbin_price_graph('today')
+    if include_hourly >= 1:
+        futbin_price_graph('today')
+    if include_hourly >= 2:
+        futbin_price_graph('yesterday')
+    if include_hourly >= 3:
+        futbin_price_graph('da_yesterday')
+
 
     return PriceHistory(sorted(d.values(), key=lambda x: x.timestamp, reverse=True))
 
@@ -111,6 +119,15 @@ class PriceHistory(object):
 
     def low(self):
         return min(self.points, key=lambda x: x.value)
+
+    def mean(self):
+        return statistics.mean(self.values())
+
+    def stdev(self):
+        return statistics.stdev(self.values())
+
+    def values(self):
+        return [x.value for x in self.points]
 
     def latest_price(self):
         return self.points[0].value if self.points else None
@@ -140,6 +157,12 @@ class PriceHistory(object):
     def add(self, current_price):
         pp = PricePoint(int(time.time()), current_price)
         self.points.insert(0, pp)
+
+    def trade_score(self, price, days=90):
+        s = self.slice(days)
+        mean = s.mean()
+        stdev = s.stdev()
+        return round(float(price - mean)/stdev, 1)
 
 class PricePoint(object):
     def __init__(self, timestamp, value):
