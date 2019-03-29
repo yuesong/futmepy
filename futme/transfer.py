@@ -98,6 +98,19 @@ class TransferMarket(object):
             profit_pct = 'all' if lsp == 0 else str(int(profit * 100.0/lsp)) + '%'
             logging.info(self.fme.disp.sprint(sfmt, p, tenure, tscore, prc, profit, profit_pct))
 
+    def relist_expired(self, rid, max_buy=None):
+        players = [x for x in self.tradepile.expired() if x['resourceId'] == rid]
+        if not players:
+            logger.warn('No expired listing for rid=%s', rid)
+            return
+
+        if max_buy is None:
+            max_buy = self.get_market_price_cached(rid)
+        for p in players:
+            self.sell(p, max_buy)
+        logger.info('%s items (rid=%s) relisted at %s', len(players), rid, max_buy)
+
+
     def search_min_price(self, player, seen_prices=3):
         mkt_min, mkt_max = price.MIN_PRICE, price.MAX_PRICE
         if isinstance(player, int):
