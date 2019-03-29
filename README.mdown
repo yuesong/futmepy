@@ -112,7 +112,7 @@ The same dictionary data structure represents both players and non-player items.
 	- `26` - PROMOA
 	- `27` - PROMOB
 	- `28` - AWARD
-	- `30` - BDAY
+	- `30` - FUT Birthday
 	- `31` - UNITED
 	- `32` - FUTMAS
 	- `33` - RTRC
