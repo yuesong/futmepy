@@ -19,23 +19,17 @@ class Proc(object):
         coins_before = self.fme.session().keepalive()
         while True:
             # handle sold and expired items
-            tradepile = self.fme.session().tradepile()
-            sold = [x for x in tradepile if x['tradeState'] == 'closed']
-            if sold:
-                sale = sum([x['currentBid'] for x in sold])
-                logger.info('%s items sold for a total of %s coins. Clear=%s',
-                            len(sold), sale, self.fme.session().tradepileClear())
-
-            expired = [x for x in tradepile if x['tradeState'] == 'expired']
-            if expired:
-                relisted = self.fme.session().relist()['tradeIdList']
-                logger.info('%s items listing expired. Relist=%s', len(expired), len(relisted))
+            self.refresh_tradepile()
 
             # check room on transfer list
             vacancy = self.fme.session().tradepile_size - len(self.fme.session().tradepile())
             logger.info('%s open spots left on the transfer list.', vacancy)
             if vacancy < 15:
-                logger.warning('It is nearly full. We are done for now')
+                logger.warning('It is nearly full. Not buying new packs.')
+                break
+            bronze = [x for x in self.fme.session().tradepile() if x['rating'] <= 64]
+            if len(bronze) >= 70:
+                logger.warning('%s bronze cards in transfer list. Not buying new packs.')
                 break
 
             self.pack()
@@ -48,6 +42,20 @@ class Proc(object):
         coins_after = self.fme.session().keepalive()
         logger.info('Coins before=%s, after=%s, profit=%s',
                     coins_before, coins_after, coins_after - coins_before)
+
+    def refresh_tradepile(self):
+        # handle sold and expired items
+        tradepile = self.fme.session().tradepile()
+        sold = [x for x in tradepile if x['tradeState'] == 'closed']
+        if sold:
+            sale = sum([x['currentBid'] for x in sold])
+            logger.info('%s items sold for a total of %s coins. Clear=%s',
+                        len(sold), sale, self.fme.session().tradepileClear())
+
+        expired = [x for x in tradepile if x['tradeState'] == 'expired']
+        if expired:
+            relisted = self.fme.session().relist()['tradeIdList']
+            logger.info('%s items listing expired. Relist=%s', len(expired), len(relisted))
 
     def pack(self):
         # buy a new pack only if there is no unassigned items
