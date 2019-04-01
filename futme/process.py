@@ -29,7 +29,7 @@ class Proc(object):
                 break
             bronze = [x for x in self.fme.session().tradepile() if x['rating'] <= 64]
             if len(bronze) >= 70:
-                logger.warning('%s bronze cards in transfer list. Not buying new packs.')
+                logger.warning('%s bronze cards listed. Not buying new packs.', len(bronze))
                 break
 
             self.pack()
