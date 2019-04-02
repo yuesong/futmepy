@@ -27,7 +27,7 @@ class LoopyTask:
         self.name = name
         self.func = func
         self.interval = interval
-        self.last_execution_time = 0 if delay == 0 else time.time() + delay
+        self.last_execution_time = 0 if delay == 0 else time.time() - interval + delay
 
     def run(self):
         if time.time() - self.last_execution_time > self.interval:
