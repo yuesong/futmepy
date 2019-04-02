@@ -18,7 +18,7 @@ cache_regions.update({
         'type': 'memory'
     },
     'transfer_market_price':{
-        'expire': 1200,
+        'expire': 600,
         'type': 'memory'
     }
 })
@@ -109,6 +109,19 @@ class TransferMarket(object):
         for p in players:
             self.sell(p, max_buy)
         logger.info('%s items (rid=%s) relisted at %s', len(players), rid, max_buy)
+
+
+    def relist_all_expired(self, rids):
+        players = [x for x in self.tradepile.expired() if x['resourceId'] in rids]
+        if not players:
+            logger.warn('No expired listing for rids: %s', rids)
+            return
+
+        sfmt = self.fme.disp.format(players, append='mp={}')
+        for p in players:
+            mkt_prc = self.get_market_price_cached(p['resourceId'])
+            self.sell(p, mkt_prc)
+            logger.info(self.fme.disp.sprint(sfmt, p, mkt_prc))
 
 
     def search_min_price(self, player, seen_prices=3):
