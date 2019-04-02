@@ -245,6 +245,15 @@ class TransferMarket(object):
                 self.sell(p, mkt_prc)
 
 
+    def sell_consumable(self, rid, buy_now):
+        session = self.fme.session()
+        card = next(x for x in session.clubConsumables() if x['resourceId'] == rid)
+        session.sendToTradepile(card['id'])
+        card = next(x for x in self.fme.tm.tradepile.inactive() if x['resourceId'] == rid)
+        starting_bid = price.pincrement(buy_now, steps=-1)
+        return session.sell(card['id'], starting_bid, buy_now)
+
+
     def buy_now(self, resource_id, max_buy):
         if max_buy <= 0:
             logging.error('There is a bug! max_buy passed to buy_now() is %s for rid %s',
