@@ -25,7 +25,7 @@ class AutoTrader:
     def create_traders(self):
         traders = []
         conf = datafile.load_json(AutoTrader._CONF_FILE)
-        for ttype in ['flip', 'buy']:
+        for ttype in ['buy', 'flip']:
             default = conf[ttype]['default']
             for c in conf[ttype]['targets']:
                 if c:
