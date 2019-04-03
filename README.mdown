@@ -160,6 +160,10 @@ The same dictionary data structure represents both players and non-player items.
     - `False` - on transfer list but inactive
 - `year` - alias to `resourceGameYear`
 
+For consumables:
+- `count` - total number of cards
+- `untradeableCount` - total number of untradeable cards
+
 # Using `fut.Core.club()` to search Club players
 ### Quality:
 - Special: `rare=True` (query param `&rate=SP`)
