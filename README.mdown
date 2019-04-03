@@ -259,8 +259,8 @@ pip install file:///home/yuesong_c_gmail_com/futmepy/fut-0.4.2.tar.gz
 - __(local)__ Deploy futmepy:
 ```
 gcloud compute scp ~/.futme/credentials.json futme:~/.futme/
-gcloud compute scp ~/.futme/autotrader.json futme:~/.futme/
+gcloud compute scp gcp/.bash_aliases gcp/* futme:~
 gcloud compute scp --recurse futme futme:~/futmepy/
 gcloud compute scp *.py futme:~/futmepy/
-gcloud compute scp gcp/.bash_aliases gcp/* futme:~
+gcloud compute scp ~/.futme/autotrader.json futme:~/.futme/
 ```
