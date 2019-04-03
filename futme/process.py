@@ -139,6 +139,17 @@ class Proc(object):
         return self.fme.session().__request__('POST', url, data=data)
 
 
+    def sell_excess_consumables(self):
+        # check room on transfer list
+        vacancy = self.fme.session().tradepile_size - len(self.fme.session().tradepile())
+        if vacancy < 15:
+            return
+        cards = [x for x in self.fme.session().tradepile() if x['resourceId'] == 5002006]
+        if len(cards) >= 10:
+            return
+        self.fme.tm.sell_consumable(5002006, 1300)
+
+
 def main():
     logging.basicConfig(
         format='%(asctime)s %(levelname)-8s %(message)s',
