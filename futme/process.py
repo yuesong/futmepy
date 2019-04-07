@@ -144,10 +144,14 @@ class Proc(object):
         vacancy = self.fme.session().tradepile_size - len(self.fme.session().tradepile())
         if vacancy < 15:
             return
-        cards = [x for x in self.fme.session().tradepile() if x['resourceId'] == 5002006]
+        # cards = [x for x in self.fme.session().tradepile() if x['resourceId'] == 5002006]
+        # cards = [x for x in self.fme.session().tradepile() if x['resourceId'] == 5002001]
+        cards = [x for x in self.fme.session().tradepile() if x['resourceId'] == 5002003]
         if len(cards) >= 10:
             return
-        self.fme.tm.sell_consumable(5002006, 1300)
+        # self.fme.tm.sell_consumable(5002006, 1300)
+        # self.fme.tm.sell_consumable(5002001, 200)
+        self.fme.tm.sell_consumable(5002003, 200)
 
 
 def main():
