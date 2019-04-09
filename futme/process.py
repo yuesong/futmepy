@@ -127,7 +127,7 @@ class Proc(object):
                 # sell if not in sbc leagues and worthwhile (400 for common, 600 for rare)
                 league = self.fme.lu.leagues.to_abbr(c['leagueId'])
                 asking_price = 400 if c['rareflag'] == 0 else 600
-                if prc > asking_price and league not in ['CHN 1', 'JPN 1']:
+                if prc > asking_price and league not in ['CHN 1', 'JPN 1', 'ARG 1']:
                     action = self.SELL
                 else:
                     action = self.KEEP
