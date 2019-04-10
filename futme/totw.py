@@ -10,6 +10,10 @@ logger = logging.getLogger(__name__)
 FH_BASE_URL='https://www.futhead.com'
 TOTW_PAGE_PATH='/19/totw/totw{}/'
 
+# command line example:
+# curl https://www.futhead.com//19/totw/totw29/ | grep apiRetrievalUrl
+# curl https://www.futhead.com/ut/api/squad-builder/totw/19/671818/ | ppjson
+
 def totw(week):
     page_url = FH_BASE_URL + TOTW_PAGE_PATH.format(week)
     html = requests.get(page_url).text
