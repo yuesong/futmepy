@@ -12,31 +12,32 @@ logger = logging.getLogger(__name__)
 
 class AutoTrader:
 
-    _CONF_FILE = 'autotrader.json'
-
-    def __init__(self, fme):
+    def __init__(self, fme, conf_file):
         self.fme = fme
+        self.conf_file = conf_file
+
         self.traders = self.create_traders()
-        self.conf_last_modified = datafile.last_modified(AutoTrader._CONF_FILE)
+        self.conf_last_modified = datafile.last_modified(self.conf_file)
         self.worker = worker.LoopyWorker()
         self.worker.register_task('status', self.print_trader_statuses, 1200)
         self.worker.register_task('reload_conf', self.reload_conf, 60, delay=60)
 
     def create_traders(self):
         traders = []
-        conf = datafile.load_json(AutoTrader._CONF_FILE)
+        conf = datafile.load_json(self.conf_file)
         for ttype in ['buy', 'flip']:
-            default = conf[ttype]['default']
-            for c in conf[ttype]['targets']:
-                if c:
-                    self.add_default(c, default)
-                    pdef = self.validate_trader_conf(c)
-                    if pdef is not None:
-                        if ttype == 'buy':
-                            traders.append(Buyer(self.fme, pdef, c))
-                        elif ttype == 'flip':
-                            traders.append(Flipper(self.fme, pdef, c))
-        logger.info('%s traders initialized:', len(traders))
+            if ttype in conf:
+                default = conf[ttype]['default']
+                for c in conf[ttype].get('targets', []):
+                    if c:
+                        self.add_default(c, default)
+                        pdef = self.validate_trader_conf(c)
+                        if pdef is not None:
+                            if ttype == 'buy':
+                                traders.append(Buyer(self.fme, pdef, c))
+                            elif ttype == 'flip':
+                                traders.append(Flipper(self.fme, pdef, c))
+        logger.info('%s traders initialized from %s:', len(traders), self.conf_file)
         self.print_trader_confs(traders)
         return traders
 
@@ -66,6 +67,10 @@ class AutoTrader:
         self.worker.run()
 
     def print_trader_statuses(self):
+        # noop if no traders
+        if not self.traders:
+            return
+
         sfmt = self.fme.disp.format([x.pdef for x in self.traders], prepend='{} {}', append='{}')
         for t in self.traders:
             ttype = t.trader_type()
@@ -73,10 +78,10 @@ class AutoTrader:
             logging.info(self.fme.disp.sprint(sfmt, t.pdef, ttype, state, t.status_str()))
 
     def reload_conf(self):
-        mtime = datafile.last_modified(AutoTrader._CONF_FILE)
+        mtime = datafile.last_modified(self.conf_file)
         if mtime > self.conf_last_modified:
             logger.info('Reloading %s - it was modified %s ago',
-                        AutoTrader._CONF_FILE, timeutil.dur_str(time.time() - mtime))
+                        self.conf_file, timeutil.dur_str(time.time() - mtime))
             self.traders = self.create_traders()
             self.conf_last_modified = mtime
 

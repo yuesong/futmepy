@@ -266,5 +266,6 @@ gcloud compute scp ~/.futme/credentials.json futme:~/.futme/
 gcloud compute scp gcp/.bash_aliases gcp/* futme:~
 gcloud compute scp --recurse futme futme:~/futmepy/
 gcloud compute scp *.py futme:~/futmepy/
-gcloud compute scp ~/.futme/autotrader.json futme:~/.futme/
+gcloud compute scp ~/.futme/autopilot.json futme:~/.futme/
+gcloud compute scp ~/.futme/autotrader_*.json futme:~/.futme/
 ```
