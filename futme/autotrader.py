@@ -21,6 +21,7 @@ class AutoTrader:
         self.worker = worker.LoopyWorker()
         self.worker.register_task('status', self.print_trader_statuses, 1200)
         self.worker.register_task('reload_conf', self.reload_conf, 60, delay=60)
+        self.enabled = True
 
     def create_traders(self):
         traders = []
@@ -61,10 +62,22 @@ class AutoTrader:
             logger.info(sfmt.format(t.trader_name(), t.conf_str()))
 
     def run(self):
-        for trader in self.traders:
-            if trader.state != 'done':
-                trader.run()
+        if self.enabled:
+            for trader in self.traders:
+                if trader.state != 'complete':
+                    trader.run()
+
         self.worker.run()
+
+    def disable(self):
+        if self.enabled:
+            self.enabled = False
+            logger.warning('AutoTrader (%s) disabled', self.conf_file)
+
+    def enable(self):
+        if not self.enabled:
+            self.enabled = True
+            logger.warning('AutoTrader (%s) enabled', self.conf_file)
 
     def print_trader_statuses(self):
         # noop if no traders
@@ -175,7 +188,7 @@ class Buyer(BaseTrader):
                 self.fme.session().sendToTradepile(item_id)
             else:
                 self.fme.session().sendToClub(item_id)
-            self.set_state('done')
+            self.set_state('complete')
 
     def conf_str(self):
         return self._conf_str('interval', 'discount', 'bid', 'flexbid')

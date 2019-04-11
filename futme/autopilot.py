@@ -25,6 +25,7 @@ class AutoPilot:
         self.reg_task('refresh_tradepile', self.fme.proc.refresh_tradepile)
         self.reg_task('packs', self.fme.proc.packs)
         self.reg_task('consumeables', self.fme.proc.sell_excess_consumables)
+        self.reg_task('check_traders', self.check_traders)
 
         self.buyers = AutoTrader(self.fme, self.conf['autotraders']['buyers'])
         self.flippers = AutoTrader(self.fme, self.conf['autotraders']['flippers'])
@@ -57,6 +58,14 @@ class AutoPilot:
             logger.error('Only %s coins left. Shutting down now.', coins)
             self.fme.shutdown()
             exit(1)
+
+    def check_traders(self):
+        active_buyers = len([x for x in self.buyers.traders if x.state == 'active'])
+        if active_buyers >= 3:
+            self.flippers.disable()
+        else:
+            self.flippers.enable()
+
 
 def main():
     logging.basicConfig(
