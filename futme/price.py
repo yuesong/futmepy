@@ -67,8 +67,10 @@ def quick(player):
     rid = str(player['resourceId'] if isinstance(player, dict) else player)
     data = futbin_get_json('https://www.futbin.com/19/playerPrices?player=' + rid)
     if data is None: return 0
-    s = data[rid]['prices']['ps']['LCPrice']
-    return int(s.replace(',', ''))
+    v = data[rid]['prices']['ps']['LCPrice']
+    if isinstance(v, int):
+        return v
+    return int(v.replace(',', ''))
 
 
 def history(player, include_hourly=0):
