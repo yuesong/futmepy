@@ -46,10 +46,11 @@ class AutoPilot:
             sms(repr(e))
 
     def reg_task(self, name, func):
-        c = self.conf[name]
-        interval = c['interval']
-        delay = c.get('delay', 0)
-        self.worker.register_task(name, func, interval, delay)
+        if name in self.conf:
+            c = self.conf[name]
+            interval = c['interval']
+            delay = c.get('delay', 0)
+            self.worker.register_task(name, func, interval, delay)
 
     def print_status(self):
         coins = self.fme.session().keepalive()
