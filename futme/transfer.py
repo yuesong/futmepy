@@ -30,6 +30,7 @@ class TransferMarket(object):
     def __init__(self, fme):
         self.fme = fme
         self.tradepile = Tradepile(fme)
+        self.failed_bids = set()
 
     def tradepile_cleanup_targets(self, keep_all_above_rating=83, sell_all_below_rating=75):
         a = self.tradepile.inactive()
@@ -264,6 +265,8 @@ class TransferMarket(object):
         failed_bid_attempts = 0
         while failed_bid_attempts < 3:
             for_sale = session.search('player', defId=resource_id, max_buy=max_buy)
+            # removed items we bid on but failed
+            for_sale = [x for x in for_sale if x['id'] not in self.failed_bids]
             for_sale.sort(key=lambda x: x['buyNowPrice'])
             if for_sale:
                 # retry if we found items but bid failed
@@ -276,6 +279,8 @@ class TransferMarket(object):
                     logger.info(self.fme.disp.sprint(sfmt, p, bid, won))
                     if won:
                         return p
+                    # record failed items to avoid retrying on them
+                    self.failed_bids.add(p['id'])
                 failed_bid_attempts += 1
             else:
                 # quit if we didn't find anything
