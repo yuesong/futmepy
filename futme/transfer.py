@@ -275,7 +275,11 @@ class TransferMarket(object):
                 sfmt = self.fme.disp.format(for_sale, append='bid={} won={}')
                 for p in for_sale:
                     bid = p['buyNowPrice']
-                    won = session.bid(p['tradeId'], bid, fast=True)
+                    try:
+                        won = session.bid(p['tradeId'], bid, fast=True)
+                    except fut.exceptions.NoTradeExistingError:
+                        won = False
+                        logger.error('Bid failed - NoTradeExistingError')
                     logger.info(self.fme.disp.sprint(sfmt, p, bid, won))
                     if won:
                         return p
