@@ -66,6 +66,10 @@ class Proc(object):
 
     def unassigned(self):
         unassigned = sorted(self.fme.session().unassigned(), key=lambda c: c['itemType'])
+        # process only bronze cards
+        unassigned = [x for x in unassigned if x['rating'] <= 64]
+        if not unassigned:
+            return []
         logger.info('Processing %s unassigned cards', len(unassigned))
         sfmt = self.fme.disp.format(unassigned, prepend='{:7}', append='mp={} {}')
 
