@@ -124,7 +124,6 @@ class TransferMarket(object):
             self.sell(p, mkt_prc)
             logger.info(self.fme.disp.sprint(sfmt, p, mkt_prc))
 
-
     def search_min_price(self, player, seen_prices=3):
         mkt_min, mkt_max = price.MIN_PRICE, price.MAX_PRICE
         if isinstance(player, int):
@@ -144,7 +143,8 @@ class TransferMarket(object):
         session = self.fme.session()
         current_player = None
         current = mkt_max
-        attempt = mkt_max
+        # use quick price as initial attempt
+        attempt = price.quick(rid)
         failed_attempt = mkt_min
         seen = {}
         # XXX cap the number of iterations in case there is a bug to cause infinite loop...
