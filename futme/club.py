@@ -2,8 +2,9 @@
 
 import logging
 import sys
+import time
 
-from . import datafile, util
+from . import datafile, timeutil, util
 
 logger = logging.getLogger(__name__)
 
@@ -32,9 +33,14 @@ class Club(object):
         result += normal(self.fme.session().unassigned())
         return result
 
-    def tradeable_totw(self, max_rating=80):
-        players = self.special(rareflags=[3])
-        players = [x for x in players if not x['untradeable'] and x['rating'] <= max_rating]
+    def tradeable_totw(self, max_rating=79, min_tenure=30):
+        def can_sell(p):
+            tradeable = not p['untradeable']
+            games_played = p['statsList'][0]['value']
+            tenure = timeutil.dur_days(time.time() - p['timestamp'])
+            return tradeable and p['rating'] <= max_rating and games_played == 0 and tenure >= min_tenure
+
+        players = [x for x in self.special(rareflags=[3]) if can_sell(x)]
         return util.psorted(players)
 
     def matchup(self, level=None, nations=None, leagues=None, teams=None):

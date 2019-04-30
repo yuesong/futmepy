@@ -65,7 +65,7 @@ The same dictionary data structure represents both players and non-player items.
 - `lastSalePrice` - int. `>0` if item was bought on the transfer market
 - `leagueId` - int
 - `lifetimeAssists` - int
-- `lifetimeStats` - array
+- `lifetimeStats` - same as `statsList` but for lifetime.
 - `loans` - ??? (seems to be `None` for everything)
 - `loyaltyBonus` - int. either `0` or `1`. player only. `None` for non-player
 - `marketDataMaxPrice` - int. example: `10000`
@@ -139,7 +139,8 @@ The same dictionary data structure represents both players and non-player items.
 - `sellerId` - int. ???. always `0`?
 - `sellerName` - examples: `None`, `'FIFA UT'`
 - `startingBid` - example: `150`
-- `statsList` - array
+- `statsList` - stats at the club: games played, goals, yellow cards, red cards, ???.
+Example: `[{'value': 42, 'index': 0}, {'value': 30, 'index': 1}, {'value': 1, 'index': 2}, {'value': 0, 'index': 3}, {'value': 0, 'index': 4}]`
 - `suspension` - example: `0`
 - `teamid` - `113057`
 - `timestamp` - `1546731760`. start time at the club???
