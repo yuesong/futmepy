@@ -164,7 +164,8 @@ class Buyer(BaseTrader):
     def __init__(self, fme, pdef, conf):
         super().__init__(fme, pdef, conf)
         self.quick_price = 0
-        self.bought = None
+        self.quantity = conf['quantity']
+        self.bought = []
         self.worker.register_task('update_bid', self.update_bid, 1200)
         self.worker.register_task('update_quick_price', self.update_quick_price, 1800)
         self.worker.register_task('attempt', self.attempt, self.interval)
@@ -183,20 +184,21 @@ class Buyer(BaseTrader):
         if won is not None:
             item_id = won['id']
             un = self.fme.session().unassigned()
-            self.bought = next(x for x in un if x['id'] == item_id)
+            self.bought.append(next(x for x in un if x['id'] == item_id))
             if item_id in self.fme.session().duplicates:
                 self.fme.session().sendToTradepile(item_id)
             else:
                 self.fme.session().sendToClub(item_id)
-            self.set_state('complete')
+            if len(self.bought) == self.quantity:
+                self.set_state('complete')
 
     def conf_str(self):
-        return self._conf_str('interval', 'discount', 'bid', 'flexbid')
+        return self._conf_str('interval', 'discount', 'bid', 'flexbid', 'quantity')
 
     def status_str(self):
         return 'bid={} mp={} qp={} atps={} paid={}'.format(
             self.bid, self.mkt_price, self.quick_price, self.attempts,
-            self.bought['lastSalePrice'] if self.bought is not None else 'na')
+            [x['lastSalePrice'] for x in self.bought] if self.bought else 'na')
 
 
 class Flipper(BaseTrader):
