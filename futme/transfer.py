@@ -254,6 +254,41 @@ class TransferMarket(object):
         starting_bid = price.pincrement(buy_now, steps=-1)
         return session.sell(card['id'], starting_bid, buy_now)
 
+    def buy_hunter_style(self, max_buy):
+        return self.buy_play_style(max_buy, 266)
+
+    def buy_shadow_style(self, max_buy):
+        return self.buy_play_style(max_buy, 268)
+
+    def buy_play_style(self, max_buy, subtypeid):
+        session = self.fme.session()
+        failed_bid_attempts = 0
+        while failed_bid_attempts < 3:
+            for_sale = session.search('training', category='playStyle', playStyle=subtypeid, max_buy=max_buy)
+            # removed items we bid on but failed
+            for_sale = [x for x in for_sale if x['id'] not in self.failed_bids]
+            for_sale.sort(key=lambda x: x['buyNowPrice'])
+            if for_sale:
+                # retry if we found items but bid failed
+                logging.info('%s play styles (%s) for sale at %s or less', len(for_sale), subtypeid, max_buy)
+                sfmt = self.fme.disp.format(for_sale, append='bid={} won={}')
+                for p in for_sale:
+                    bid = p['buyNowPrice']
+                    try:
+                        won = session.bid(p['tradeId'], bid, fast=True)
+                    except fut.exceptions.NoTradeExistingError:
+                        won = False
+                        logger.error('Bid failed - NoTradeExistingError')
+                    logger.info(self.fme.disp.sprint(sfmt, p, bid, won))
+                    if won:
+                        return p
+                    # record failed items to avoid retrying on them
+                    self.failed_bids.add(p['id'])
+                failed_bid_attempts += 1
+            else:
+                # quit if we didn't find anything
+                break
+        return None
 
     def buy_now(self, resource_id, max_buy):
         if max_buy <= 0:

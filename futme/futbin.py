@@ -11,13 +11,17 @@ from . import util
 logger = logging.getLogger(__name__)
 
 def print_sbc_buyer_configs(fme, fbids):
-    configs = [sbc_buyer_config(fme, fbid) for fbid in fbids]
+    fbid_map = {}
+    for fbid in fbids:
+        fbid_map[fbid] = fbid_map.get(fbid, 0) + 1
+    configs = [sbc_buyer_config(fme, fbid, quantity) for fbid, quantity in fbid_map.items()]
     configs.sort(key=lambda x: x['discount'], reverse=True)
     for config in configs:
         print(json.dumps(config, ensure_ascii=False) + ',')
+    print('{}')
 
-def sbc_buyer_config(fme, fbid):
-    result = {'flexbid':True}
+def sbc_buyer_config(fme, fbid, quantity):
+    result = {'flexbid':True, 'quantity':quantity}
     rid = player_resource_id(fbid)
     pdef = util.searchDefinition(fme.session(), rid)
     if pdef is None:
